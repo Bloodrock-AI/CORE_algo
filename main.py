@@ -143,6 +143,83 @@ def evaluate(seq: List[str], dfa: List[Node]) -> float:
 
     return max_pc
 
+def actions_to_states(seq: List[str], dfa: List[Node]) -> List[str]:
+    """
+    Simulates the DFA traversal based on a sequence of actions (starting with 0) 
+    and returns the sequence of visited states.
+
+    Args:
+        seq (List[str]): The sequence of actions performed by the agent. 
+                         The first element should be '0', indicating the initial state.
+        dfa (List[Node]): The list of nodes representing the DFA.
+
+    Returns:
+        List[str]: The ordered list of state names visited starting from the initial state.
+
+    Notes:
+        - Assumes the first element '0' just signals the start; no action is taken for it.
+        - If an action does not match any available transition, stops the simulation.
+    """
+    current = dfa[0]  # Start at initial state
+    states_visited = [current.name]
+
+    for idx, action in enumerate(seq):
+        if idx == 0:
+            # Skip the '0' symbol, it's just a marker for starting point
+            continue
+
+        transition_found = False
+        for transition in current.transitions:
+            if transition.symbol == action:
+                current = transition._to
+                states_visited.append(current.name)
+                transition_found = True
+                break
+
+        if not transition_found:
+            # Action doesn't match any transition from current node, stop traversal
+            break
+
+    return states_visited
+
+def simplify_action_sequence(seq: List[str], dfa: List[Node]) -> List[str]:
+    if not seq:
+        print("[Simplify] Empty sequence provided.")
+        return []
+
+    current = dfa[0]  # Start at initial state
+    simplified_seq = [0]  # Always keep the initial '0'
+
+    print(f"[Simplify] Starting at state: {current.name}")
+    for idx, action in enumerate(seq):
+        if idx == 0:
+            # Skip '0' marker
+            continue
+
+        next_state = None
+        for transition in current.transitions:
+            if transition.symbol == action:
+                next_state = transition._to
+                break
+
+        if next_state is None:
+            print(f"[Simplify] Action '{action}' is invalid from state '{current.name}'. Stopping.")
+            break
+
+        print(f"[Simplify] Action '{action}' transitions from '{current.name}' to '{next_state.name}'.")
+
+        if next_state.name == current.name:
+            print(f"[Simplify] -> State did not change (self-loop). Removing action '{action}' from sequence.")
+        else:
+            print(f"[Simplify] -> State changed! Keeping action '{action}'.")
+            simplified_seq.append(action)
+
+        current = next_state
+
+    print(f"[Simplify] Final simplified sequence: {simplified_seq}")
+    return simplified_seq
+
+
 def main() -> None:
     get_path([G0, G1, G2], G0, 5)
     print(paths[2])
